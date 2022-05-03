@@ -11,9 +11,10 @@ import csv
 from google.cloud import storage
 
 bucket_name = os.environ['indeed_scrape_bucket'] #without gs://
-file_name = os.environ['indeed_scrape1']
+file_name = os.environ['indeed_scrape1.csv']
 cf_path = '/tmp/{}'.format(file_name)
 
+# file path is '/tmp/indeed_scrape1.csv'
 def scrape_pubsub(event, context):
 
     # set storage client
@@ -36,7 +37,7 @@ def scrape_pubsub(event, context):
         location = ['Seattle, WA', 'San Francisco, CA'] 
 
         for k in location:    
-            for i in range(0,20,1): # calling 20 entries   
+            for i in range(0,10,1): # calling 10 entries   
                 y=requests.get('https://www.indeed.com/jobs?q={}&l={}&sort=date='.format(position, k)+str(i))
 
                 sou=bsopa(y.text,'lxml')
@@ -78,20 +79,22 @@ def scrape_pubsub(event, context):
             writer.writerow(['job_title', 'company_name', 'job_location', 'salary'])
             writer.writerows(get_record)
         
-        data = 'indeed_scrape1.csv'
-        path_name = get_file_path(data)
+        #data = 'indeed_scrape1.csv'
+        #path_name = get_file_path(data)
+
 
         # set Blob
-        blob = storage.Blob(file_name, bucket)
+        blob = storage.Blob('indeed_scrape1.csv', bucket)
 
         # if above doesn't work, try:
         # blob = storage.Blob(data, bucket)
 
         # upload the file to GCS
-        blob.upload_from_filename(path_name)
+        blob.upload_from_filename(cf_path)
 
         # delete temp directory
-        os.remove(path_name)
+        os.remove(cf_path)
 
     pubsub_message = base64.b64decode(event['data']).decode('utf-8')
     print(pubsub_message)
+    
